@@ -1,1 +1,141 @@
+import tkinter as tk
+import random
+import time
 
+class MemoryGame:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Memory Game")
+        self.root.geometry("300x300")
+
+        self.buttons = []
+        self.selected = []
+        self.score = 0
+        self.game_active = False
+        self.locked = False
+
+        self.create_main_menu()
+        self.root.mainloop()
+
+    def create_main_menu(self):
+        main_frame = tk.Frame(self.root)
+        main_frame.pack(pady=20)
+        sizes = [("3x4", 3, 4), ("4x4", 4, 4), ("6x6", 6, 6)]
+
+        for text, rows, cols in sizes:
+            btn = tk.Button(main_frame, text=text, width=8, height=2, command=lambda r=rows, c=cols: self.start_new_game(r, c))
+            btn.pack(pady=5)
+
+    def start_new_game(self, rows, cols):
+        if self.game_active:
+            return
+
+        self.game_active = True
+        self.score = 0
+        self.selected = []
+        self.locked = False
+
+        self.game_window = tk.Toplevel(self.root)
+        self.game_window.title(f"Memory {rows}x{cols}")
+        self.game_window.protocol("WM_DELETE_WINDOW", self.close_game)
+
+        total = rows * cols
+        symbols = random.sample([
+            '@', '$', '%', '&', '+', '=', '*', '^',
+            '/', '~', '{', '\\', '#', 'w', 'm', '<', 'z', 'q'
+        ], total // 2) * 2
+        random.shuffle(symbols)
+
+        self.buttons = []
+        for i in range(rows):
+            row_frame = tk.Frame(self.game_window)
+            row_frame.pack()
+            for j in range(cols):
+                global start_time
+                global score
+                not_pare=0
+                start_time = time.perf_counter()
+                index = i * cols + j
+                btn = tk.Button(row_frame, text=' ', width=4, height=2,bg='lightblue', command=lambda idx=index: self.card_click(idx))
+                btn.pack(side='left', padx=2, pady=2)
+                btn.is_revealed = False
+                btn.symbol = symbols[index]
+                self.buttons.append(btn)
+
+    def card_click(self, index):
+        if self.locked or self.buttons[index].is_revealed:
+            return
+
+        self.reveal_card(index)
+
+        if len(self.selected) == 2:
+            self.check_match()
+
+    def reveal_card(self, index):
+        btn = self.buttons[index]
+        btn.config(text=btn.symbol, bg='white')
+        btn.is_revealed = True
+        self.selected.append(btn)
+
+    def check_match(self):
+        self.locked = True
+        card1, card2 = self.selected
+
+        if card1.symbol == card2.symbol:
+            self.score += 1000
+            card1.config(bg='lightgreen')
+            card2.config(bg='lightgreen')
+            self.selected.clear()
+            self.check_win()
+            self.locked = False
+        else:
+            self.root.after(1000, self.hide_mismatched)
+
+
+
+    def hide_mismatched(self):
+        for btn in self.selected:
+            btn.config(
+                text=' ',
+                bg='lightblue',
+                relief='raised',
+                state='normal'
+            )
+            btn.is_revealed = False
+        self.selected.clear()
+        self.locked = False
+
+
+    def check_win(self):
+        if all(btn.is_revealed for btn in self.buttons):
+            self.show_win_message()
+            self.game_window.destroy()
+            self.game_active = False
+
+    def show_win_message(self):
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        min=elapsed_time//60
+        global final_time
+        if min==0:
+            final_time=elapsed_time
+            final_time_str=' секунд'
+            print(f"Время выполнения: {elapsed_time:.0f} секунд")
+        else: final_time=min;  final_time_str=' минут'; print(f"Время выполнения: {min:.0f} минут")
+
+        win = tk.Toplevel(self.root)
+        win.title("Победа!")
+        tk.Label(win,text=f"Победа! \n Время: {final_time:.0f} {final_time_str:} \n Очки: {self.score:}" ,font=('Arial', 14), padx=20, pady=20).pack()
+        end_time = time.perf_counter()
+        elapsed_time = end_time - start_time
+        min=elapsed_time//60
+
+
+
+    def close_game(self):
+        self.game_window.destroy()
+        self.game_active = False
+
+
+if __name__ == "__main__":
+    MemoryGame()
