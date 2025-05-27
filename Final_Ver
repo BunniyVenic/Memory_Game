@@ -13,6 +13,7 @@ class MemoryGame:
         self.score = 0
         self.game_active = False
         self.locked = False
+        self.no_pair = 0
 
         self.create_main_menu()
         self.root.mainloop()
@@ -89,6 +90,8 @@ class MemoryGame:
             self.check_win()
             self.locked = False
         else:
+            self.score -= 100
+            self.no_pair +=1
             self.root.after(1000, self.hide_mismatched)
 
 
@@ -125,7 +128,7 @@ class MemoryGame:
 
         win = tk.Toplevel(self.root)
         win.title("Победа!")
-        tk.Label(win,text=f"Победа! \n Время: {final_time:.0f} {final_time_str:} \n Очки: {self.score:}" ,font=('Arial', 14), padx=20, pady=20).pack()
+        tk.Label(win,text=f"Победа! \n Время: {final_time:.0f} {final_time_str:} \n Очки: {self.score:} \n Неудачных кликов: {self.no_pair}" ,font=('Arial', 14), padx=20, pady=20).pack()
         end_time = time.perf_counter()
         elapsed_time = end_time - start_time
         min=elapsed_time//60
